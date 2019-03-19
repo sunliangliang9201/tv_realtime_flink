@@ -12,7 +12,7 @@ object Constant {
 
   val INDEX_SPLITER = "-"
 
-  val FORMATOR_PACACKE_PREFIX = "com.bftv.dt.display2.formator."
+  val FORMATOR_PACACKE_PREFIX = "com.bftv.dt.realtime.format."
 
   val REDIS_SPLITER = "|"
 }

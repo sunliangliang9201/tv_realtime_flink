@@ -78,7 +78,6 @@ object TvRealTimeMain {
       val sinkConf = JDBCSinkFactory.getJDBCSink(i)
       tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
       tableEnv.sqlQuery(i.select_sql).insertInto(i.task_key, queryConfig)
-      println(1)
     }
 
     //测试
