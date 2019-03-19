@@ -117,7 +117,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.bftv.dt.realtime.main.TvDisplayMain</mainClass>
+                                    <mainClass>com.bftv.dt.realtime.main.TvRealTimeMain</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
