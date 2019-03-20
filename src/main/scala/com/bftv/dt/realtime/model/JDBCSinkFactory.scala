@@ -14,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
   * @author sunliangliang 2019-03-10 https://github.com/sunliangliang9201/tv_realtime_flink
   * @version 1.0
   */
-object JDBCSinkFactory {
+class JDBCSinkFactory {
 
   var maps = Map[String, TypeInformation[_]]()
   maps += ("STRING_TYPE" -> createTypeInformation[String])

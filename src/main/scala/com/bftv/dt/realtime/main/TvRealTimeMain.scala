@@ -80,43 +80,10 @@ object TvRealTimeMain {
     //接下来从mysql获取需要执行的sql以及结果表
     val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)
     for (i <- querys) {
-      val sinkConf = JDBCSinkFactory.getJDBCSink(i)
+      val sinkConf = new JDBCSinkFactory().getJDBCSink(i)
       tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
       tableEnv.sqlQuery(i.select_sql).insertInto(i.task_key, queryConfig)
     }
-
-    //测试
-//        val jdbcSink = JDBCAppendTableSink.builder()
-//          .setDrivername("com.mysql.cj.jdbc.Driver")
-//          .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv")
-//          .setQuery("insert into bftv.tv_display_window_active(end_window,counts) values(?,?)")
-//          .setUsername("dtadmin")
-//          .setPassword("Dtadmin123!@#")
-//          .setParameterTypes(createTypeInformation[Timestamp], createTypeInformation[Long])
-//          .build()
-//        tableEnv.registerTableSink(
-//          "active",
-//          Array[String]("end_window", "counts"),
-//          Array[TypeInformation[_]](createTypeInformation[Timestamp], createTypeInformation[Long]),
-//          jdbcSink
-//        )
-//        tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '10' second, INTERVAL '20' second) as end_window, count(distinct(sn)) as counts from tv_heart group by HOP(rowtime, INTERVAL '10' second, INTERVAL '20' second)").insertInto("active")
-//
-//        val jdbcSink2 = JDBCAppendTableSink.builder()
-//          .setDrivername("com.mysql.cj.jdbc.Driver")
-//          .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv")
-//          .setQuery("insert into bftv.tv_display_window_position(end_window,country,province,city,counts) values(?,?,?,?,?)")
-//          .setUsername("dtadmin")
-//          .setPassword("Dtadmin123!@#")
-//          .setParameterTypes(createTypeInformation[Timestamp], createTypeInformation[String], createTypeInformation[String], createTypeInformation[String], createTypeInformation[Long])
-//          .build()
-//        tableEnv.registerTableSink(
-//          "position",
-//          Array[String]("end_window", "country", "province", "city", "counts"),
-//          Array[TypeInformation[_]](createTypeInformation[Timestamp], createTypeInformation[String], createTypeInformation[String], createTypeInformation[String], createTypeInformation[Long]),
-//          jdbcSink2
-//        )
-//        tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '10' second, INTERVAL '20' second) as end_window, country, province, city, count(distinct(sn)) as counts from tv_heart group by HOP(rowtime, INTERVAL '10' second, INTERVAL '20' second), country, province, city").insertInto("position")
     env.execute()
   }
 }
