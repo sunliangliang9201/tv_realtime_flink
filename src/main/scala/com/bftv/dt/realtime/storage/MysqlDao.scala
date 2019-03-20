@@ -84,7 +84,7 @@ object MysqlDao {
       while (res.next()){
         val flinkQuery = FlinkQuery(
           task_key = res.getString("task_key"),
-          res_fields = res.getString("dim_index"),
+          insert_sql = res.getString("dim_index"),
           select_sql = res.getString("select_sql"),
           insert_table = res.getString("insert_table"),
           db_name = res.getString("db_name"),

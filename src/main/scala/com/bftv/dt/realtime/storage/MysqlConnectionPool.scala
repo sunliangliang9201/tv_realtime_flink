@@ -24,7 +24,7 @@ class MysqlConnectionPool {
 
   try {
     cpds.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + db)
-    cpds.setDriverClass("com.mysql.cj.jdbc.Driver")
+    cpds.setDriverClass("com.mysql.jdbc.Driver")
     cpds.setUser(user)
     cpds.setPassword(passwd)
     cpds.setMaxPoolSize(10)

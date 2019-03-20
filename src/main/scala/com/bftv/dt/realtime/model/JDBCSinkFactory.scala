@@ -44,13 +44,14 @@ object JDBCSinkFactory {
     var tmpSink: JDBCAppendTableSink = null
     try {
       tmpSink = JDBCAppendTableSink.builder()
-        .setDrivername("com.mysql.cj.jdbc.Driver")
+        .setDrivername("com.mysql.jdbc.Driver")
         .setDBUrl("jdbc:mysql://" + flinkQuery.db_host + ":" + flinkQuery.db_port + "/" + flinkQuery.db_name)
-        .setQuery(flinkQuery.select_sql.stripMargin)
+        .setQuery(flinkQuery.insert_sql)
         .setUsername(flinkQuery.db_user)
         .setPassword(flinkQuery.db_pwd)
         .setParameterTypes(arrTypes.map(_._2).toArray: _*)
         .build()
+
       tmpSink.configure(arrTypes.map(_._1).toArray,arrTypes.map(_._2).toArray)
       return (tmpSink, arrTypes.toArray)
     }catch {

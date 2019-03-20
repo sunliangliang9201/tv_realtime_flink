@@ -8,7 +8,7 @@ package com.bftv.dt.realtime.model
   */
 case class FlinkQuery (
                         task_key: String,
-                        res_fields: String,
+                        insert_sql: String,
                         select_sql: String,
                         insert_table: String,
                         db_name: String,
