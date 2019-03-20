@@ -39,6 +39,7 @@ object TvRealTimeMain {
     logger.info("Success load the flinkKey config from mysql !")
 
     //env config
+    //之所以try是因为空指针捣乱
     try{
       val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
       env.setMaxParallelism(128)
