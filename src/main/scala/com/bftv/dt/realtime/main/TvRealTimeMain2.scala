@@ -1,6 +1,5 @@
 package com.bftv.dt.realtime.main
 
-import java.sql.Timestamp
 import java.util.{Properties, TimeZone}
 
 import com.bftv.dt.realtime.format.LogFormator
@@ -9,18 +8,15 @@ import com.bftv.dt.realtime.storage.MysqlDao
 import com.bftv.dt.realtime.utils.Constant
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.time.Time
-import org.apache.flink.api.common.typeinfo.TypeInformation
-import org.apache.flink.api.java.io.jdbc.JDBCAppendTableSink
-import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
+import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema
 import org.apache.flink.table.api.TableEnvironment
-import org.slf4j.LoggerFactory
-import org.apache.flink.api.scala._
-import org.apache.flink.runtime.state.filesystem.FsStateBackend
 import org.apache.flink.table.api.scala._
+import org.slf4j.LoggerFactory
 
 /**
   * 主类入口：初始化各种配置，并创建关键对象；包含主要逻辑
@@ -74,8 +70,12 @@ object TvRealTimeMain {
     val kafkaConsumer = new FlinkKafkaConsumer09[String](topicList, new SimpleStringSchema, prop)
     kafkaConsumer.setStartFromLatest()
     //kafkaConsumer.setStartFromGroupOffsets()
-    val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).assignTimestampsAndWatermarks(new MyAssigner())
-    tableEnv.registerDataStream("tv_heart", ds, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'value, 'rowtime.rowtime)
+    val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields))
+    val ds2 = ds.filter(bean => {
+      bean.value != "-" && bean.uuid != "-" && bean.itime != "-" && bean.mac != "-" && bean.mos != "-"
+    })
+    val ds3 = ds2.assignTimestampsAndWatermarks(new MyAssigner())
+    tableEnv.registerDataStream("tv_heart", ds3, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
 
     //接下来从mysql获取需要执行的sql以及结果表
     val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)

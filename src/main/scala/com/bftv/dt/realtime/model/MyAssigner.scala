@@ -24,7 +24,7 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
     val timeStr = element.itime
     var timestamp = 0L
     if (timeStr == "-"){
-      timestamp = previousElementTimestamp
+      return currentMaxTimestamp
     }else{
       timestamp = format.parse(timeStr).getTime
     }
@@ -41,6 +41,6 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
 
   override def getCurrentWatermark: Watermark = {
     new Watermark(currentMaxTimestamp - maxOutOrderness)
-    //new Watermark(System.currentTimeMillis())
+    //new Watermark(System.currentTimeMillis() - maxOutOrderness)
   }
 }
