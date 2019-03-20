@@ -51,8 +51,6 @@ class JDBCSinkFactory {
         .setPassword(flinkQuery.db_pwd)
         .setParameterTypes(arrTypes.map(_._2).toArray: _*)
         .build()
-
-      tmpSink.configure(arrTypes.map(_._1).toArray,arrTypes.map(_._2).toArray)
       return (tmpSink, arrTypes.toArray)
     }catch {
       case e: Exception => logger.error("initial JDBCSink failed ... + " + e)

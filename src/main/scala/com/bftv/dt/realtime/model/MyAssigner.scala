@@ -28,11 +28,14 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
     }else{
       timestamp = format.parse(timeStr).getTime
     }
-    if ((timestamp - System.currentTimeMillis()) > 60000){
+    if ((timestamp - System.currentTimeMillis()) >= 60000){
+      if (currentMaxTimestamp == 0){
+        return System.currentTimeMillis()
+      }
       return currentMaxTimestamp
     }
     currentMaxTimestamp = max(currentMaxTimestamp, timestamp)
-    if ((currentMaxTimestamp - timestamp) > 30000){
+    if ((currentMaxTimestamp - timestamp) >= 30000){
       return currentMaxTimestamp
     }
     timestamp
