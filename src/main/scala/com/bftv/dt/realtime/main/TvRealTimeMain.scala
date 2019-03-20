@@ -75,7 +75,7 @@ object TvRealTimeMain {
 
       val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields))
       val ds2 = ds.filter(bean => {
-        bean.value != "-" && bean.uuid != "-" && bean.itime != "-" && bean.mac != "-" && bean.mos != "-"
+        bean != null && bean.value != "-" //&& bean.uuid != "-" && bean.itime != "-" && bean.mac != "-" && bean.mos != "-"
       })
       val ds3 = ds2.assignTimestampsAndWatermarks(new MyAssigner())
       tableEnv.registerDataStream("tv_heart", ds3, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
