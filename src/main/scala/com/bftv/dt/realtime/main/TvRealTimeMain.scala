@@ -29,6 +29,7 @@ object TvRealTimeMain {
   val logger = LoggerFactory.getLogger(this.getClass)
 
   def main(args: Array[String]): Unit = {
+
     val flinkKey = "TvDisplay"
     val flinkKeyConf = MysqlDao.getFlinkKeyConf(flinkKey)
     if (null == flinkKeyConf) {
@@ -70,6 +71,7 @@ object TvRealTimeMain {
       val kafkaConsumer = new FlinkKafkaConsumer09[String](topicList, new SimpleStringSchema, prop)
       kafkaConsumer.setStartFromLatest()
       //kafkaConsumer.setStartFromGroupOffsets()
+
       val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields))
       val ds2 = ds.filter(bean => {
         bean.value != "-" && bean.uuid != "-" && bean.itime != "-" && bean.mac != "-" && bean.mos != "-"
@@ -81,16 +83,15 @@ object TvRealTimeMain {
           val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)
           for (i <- querys) {
             val sinkConf = new JDBCSinkFactory().getJDBCSink(i)
-            println(sinkConf._1)
             tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
             val resTable = tableEnv.sqlQuery(i.select_sql)
-            println(resTable)
-            resTable.insertInto(i.task_key, queryConfig)
+            //这里的不为null判断是凭感觉加的，实际上可能不起作用
+            if (null != resTable){
+              resTable.insertInto(i.task_key, queryConfig)
+            }
           }
-//      tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '10' second, INTERVAL '30' second) as end_window, count(uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '10' second, INTERVAL '30' second)").toAppendStream[(Timestamp, Long)](queryConfig).print()
-      println(1)
+
       env.execute("TvDisplay")
-      println(2)
     }catch {
       case e: Exception => e.printStackTrace()
     }
