@@ -37,8 +37,6 @@ object TvRealTimeMain {
     }
     logger.info("Success load the flinkKey config from mysql !")
 
-    //env config
-    //之所以try是因为空指针捣乱
     try{
       val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
       env.setMaxParallelism(128)
@@ -69,29 +67,26 @@ object TvRealTimeMain {
       flinkKeyConf.topics.split(",").map(topicList.add(_))
       val logFormator = Class.forName(Constant.FORMATOR_PACACKE_PREFIX + flinkKeyConf.formator).newInstance().asInstanceOf[LogFormator]
       val kafkaConsumer = new FlinkKafkaConsumer09[String](topicList, new SimpleStringSchema, prop)
-      //kafkaConsumer.setStartFromLatest()
-      kafkaConsumer.setStartFromGroupOffsets()
+      kafkaConsumer.setStartFromLatest()
+      //kafkaConsumer.setStartFromGroupOffsets()
 
-      val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields))
-      val ds2 = ds.filter(bean => {
-        bean != null && bean.value != "-"
-        //&& bean.uuid != "-" && bean.itime != "-" && bean.mac != "-" && bean.mos != "-"
+      val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
+        null != bean && bean.value != "-"
       })
-      val ds3 = ds2.assignTimestampsAndWatermarks(new MyAssigner())
-      tableEnv.registerDataStream("tv_heart", ds3, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
+      val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner())
+      tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
 
       //接下来从mysql获取需要执行的sql以及结果表
-          val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)
-          for (i <- querys) {
-            val sinkConf = new JDBCSinkFactory().getJDBCSink(i)
-            tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
-            val resTable = tableEnv.sqlQuery(i.select_sql)
-            //这里的不为null判断是凭感觉加的，实际上可能不起作用
-            if (null != resTable){
-              resTable.insertInto(i.task_key, queryConfig)
-            }
-          }
-
+      val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)
+      for (i <- querys) {
+        val sinkConf = new JDBCSinkFactory().getJDBCSink(i)
+        tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
+        val resTable = tableEnv.sqlQuery(i.select_sql)
+        //这里的不为null判断是凭感觉加的，实际上可能不起作用
+        if (null != resTable){
+          resTable.insertInto(i.task_key, queryConfig)
+        }
+      }
       env.execute(flinkKeyConf.appName)
     }catch {
       case e: Exception => e.printStackTrace()

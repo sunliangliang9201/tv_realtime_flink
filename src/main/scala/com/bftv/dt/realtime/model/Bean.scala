@@ -8,26 +8,27 @@ package com.bftv.dt.realtime.model
   * @version 1.0
   */
 
-case class Bean (country: String = "-",
-                 province: String = "-",
-                 city: String = "-",
-                 isp: String = "-",
-                 appkey: String = "-",
-                 ltype: String = "-",
-                 uid: String = "-",
-                 imei: String = "-",
-                 userid: String = "-",
-                 mac: String = "-",
-                 apptoken: String = "-",
-                 ver: String = "-",
-                 mtype:String = "-",
-                 version: String = "-",
-                 androidid: String = "-",
-                 unet:String = "-",
-                 mos: String = "-",
-                 itime: String = "-",
-                 uuid: String = "-",
-                 gid:String = "-",
+case class Bean (var country: String = "-",
+                 var province: String = "-",
+                 var city: String = "-",
+                 var isp: String = "-",
+                 var appkey: String = "-",
+                 var ltype: String = "-",
+                 var uid: String = "-",
+                 var imei: String = "-",
+                 var userid: String = "-",
+                 var mac: String = "-",
+                 var apptoken: String = "-",
+                 var ver: String = "-",
+                 var mtype:String = "-",
+                 var version: String = "-",
+                 var androidid: String = "-",
+                 var unet:String = "-",
+                 var mos: String = "-",
+                 var itime: String = "-",
+                 var uuid: String = "-",
+                 var gid:String = "-",
+                 var value: String = "-"
 //                 sn:String = "-",
 //                 plt_ver: String = "-",
 //                 package_name: String = "-",
@@ -37,11 +38,11 @@ case class Bean (country: String = "-",
 //                 softid: String = "-",
 //                 page_title: String = "-",
 //                 ip: String = "-",
-                 value: String = "-"
+
                 )
 object App{
   def main(args: Array[String]): Unit = {
-    val b = Bean(appkey = "q")
-    println(b)
+    var b = Bean()
+    b.country = "a"
   }
 }

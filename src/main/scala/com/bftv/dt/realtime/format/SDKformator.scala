@@ -30,7 +30,7 @@ class SDKFormator extends LogFormator {
   override def format(logStr: String, ipAreaIspCache: Array[(String, String, String, String, Long, Long)], fields: Array[String]): Bean = {
     var paramMap: mutable.Map[String, String] = mutable.Map[String, String]()
     var res :Map[String, String] = Map[String, String]()
-    var bean: Bean = null
+    var bean: Bean = Bean()
     var appkey = "-"
     try{
       val logRegex(ip, query) = logStr
@@ -67,27 +67,27 @@ class SDKFormator extends LogFormator {
           }
         }
       }
-      bean = new Bean(
-        country = res.getOrElse("country", "-"),
-        province = res.getOrElse("province", "-"),
-        city = res.getOrElse("city", "-"),
-        isp = res.getOrElse("isp", "-"),
-        appkey = res.getOrElse("appkey", "-"),
-        ltype = res.getOrElse("ltype", "-"),
-        uid = res.getOrElse("uid", "-"),
-        imei = res.getOrElse("imei", "-"),
-        userid = res.getOrElse("userid", "-"),
-        mac = res.getOrElse("mac", "-"),
-        apptoken = res.getOrElse("apptoken", "-"),
-        ver = res.getOrElse("ver", "-"),
-        mtype = res.getOrElse("mtype", "-"),
-        version = res.getOrElse("version", "-"),
-        androidid = res.getOrElse("androidid", "-"),
-        unet = res.getOrElse("unet", "-"),
-        mos = res.getOrElse("mos", "-"),
-        itime = res.getOrElse("itime", "-"),
-        uuid = res.getOrElse("uuid", "-"),
-        gid = res.getOrElse("gid", "-"),
+      bean.country = res.getOrElse("country", "-")
+      bean.province = res.getOrElse("province", "-")
+      bean.city = res.getOrElse("city", "-")
+      bean.isp = res.getOrElse("isp", "-")
+      bean.appkey = res.getOrElse("appkey", "-")
+      bean.ltype = res.getOrElse("ltype", "-")
+      bean.uid = res.getOrElse("uid", "-")
+      bean.imei = res.getOrElse("imei", "-")
+      bean.userid = res.getOrElse("userid", "-")
+      bean.mac = res.getOrElse("mac", "-")
+      bean.apptoken = res.getOrElse("apptoken", "-")
+      bean.ver = res.getOrElse("ver", "-")
+      bean.mtype = res.getOrElse("mtype", "-")
+      bean.version = res.getOrElse("version", "-")
+      bean.androidid = res.getOrElse("androidid", "-")
+      bean.unet = res.getOrElse("unet", "-")
+      bean.mos = res.getOrElse("mos", "-")
+      bean.itime = res.getOrElse("itime", "-")
+      bean.uuid = res.getOrElse("uuid", "-")
+      bean.gid = res.getOrElse("gid", "-")
+      bean.value = res.getOrElse("value", "-")
 //        sn = res.getOrElse("sn", "-"),
 //        plt_ver = res.getOrElse("plt_ver", "-"),
 //        package_name = res.getOrElse("package_name", "-"),
@@ -97,8 +97,7 @@ class SDKFormator extends LogFormator {
 //        softid = res.getOrElse("softid", "-"),
 //        page_title = res.getOrElse("page_title", "-"),
 //        ip = res.getOrElse("ip", "-"),
-        value = res.getOrElse("value", "-")
-      )
+
       return bean
     }catch {
       case e: Exception => logger.error("Parse the message failed ..., " + e)
