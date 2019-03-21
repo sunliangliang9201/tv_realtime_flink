@@ -29,7 +29,6 @@ object TvRealTimeMain {
   val logger = LoggerFactory.getLogger(this.getClass)
 
   def main(args: Array[String]): Unit = {
-
     val flinkKey = "TvDisplay"
     val flinkKeyConf = MysqlDao.getFlinkKeyConf(flinkKey)
     if (null == flinkKeyConf) {
@@ -70,12 +69,13 @@ object TvRealTimeMain {
       flinkKeyConf.topics.split(",").map(topicList.add(_))
       val logFormator = Class.forName(Constant.FORMATOR_PACACKE_PREFIX + flinkKeyConf.formator).newInstance().asInstanceOf[LogFormator]
       val kafkaConsumer = new FlinkKafkaConsumer09[String](topicList, new SimpleStringSchema, prop)
-      kafkaConsumer.setStartFromLatest()
-      //kafkaConsumer.setStartFromGroupOffsets()
+      //kafkaConsumer.setStartFromLatest()
+      kafkaConsumer.setStartFromGroupOffsets()
 
       val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields))
       val ds2 = ds.filter(bean => {
-        bean != null && bean.value != "-" //&& bean.uuid != "-" && bean.itime != "-" && bean.mac != "-" && bean.mos != "-"
+        bean != null && bean.value != "-"
+        //&& bean.uuid != "-" && bean.itime != "-" && bean.mac != "-" && bean.mos != "-"
       })
       val ds3 = ds2.assignTimestampsAndWatermarks(new MyAssigner())
       tableEnv.registerDataStream("tv_heart", ds3, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
@@ -92,7 +92,7 @@ object TvRealTimeMain {
             }
           }
 
-      env.execute("TvDisplay")
+      env.execute(flinkKeyConf.appName)
     }catch {
       case e: Exception => e.printStackTrace()
     }
