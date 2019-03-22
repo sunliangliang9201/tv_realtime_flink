@@ -81,8 +81,18 @@ object TvRealTimeMain2 {
 
 
 //    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '24' hour) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(uuid) from tv_heart group by cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date), HOP(rowtime, INTERVAL '1' minute, INTERVAL '24' hour)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
-    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '2' minute) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(uuid) from tv_heart group by cast(DATE_FORMAT(rowtime, '%MM') as Date), HOP(rowtime, INTERVAL '1' minute, INTERVAL '2' minute)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
+//    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '24' hour) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(uuid) from tv_heart group by cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date), HOP(rowtime, INTERVAL '1' minute, INTERVAL '24' hour)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
 
+    val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)
+    for (i <- querys) {
+      val sinkConf = new JDBCSinkFactory().getJDBCSink(i)
+      tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
+      val resTable = tableEnv.sqlQuery(i.select_sql)
+      //这里的不为null判断是凭感觉加的，实际上可能不起作用
+      if (null != resTable){
+        resTable.insertInto(i.task_key, queryConfig)
+      }
+    }
 //    val jdbcSink = JDBCAppendTableSink.builder()
 //      .setDrivername("com.mysql.jdbc.Driver")
 //      .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv_realtime")
