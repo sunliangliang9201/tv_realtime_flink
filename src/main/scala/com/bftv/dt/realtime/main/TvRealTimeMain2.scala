@@ -1,5 +1,6 @@
 package com.bftv.dt.realtime.main
 
+import java.sql.{Date, Timestamp}
 import java.util.{Properties, TimeZone}
 
 import com.bftv.dt.realtime.format.LogFormator
@@ -8,6 +9,7 @@ import com.bftv.dt.realtime.storage.MysqlDao
 import com.bftv.dt.realtime.utils.Constant
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.time.Time
+import org.apache.flink.api.java.io.jdbc.JDBCAppendTableSink
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
@@ -17,6 +19,8 @@ import org.apache.flink.streaming.util.serialization.SimpleStringSchema
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala._
 import org.slf4j.LoggerFactory
+
+import scala.collection.mutable.Set
 
 /**
   * 主类入口：初始化各种配置，并创建关键对象；包含主要逻辑
@@ -37,6 +41,7 @@ object TvRealTimeMain2 {
     }
     logger.info("Success load the flinkKey config from mysql !")
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(1)
     env.setMaxParallelism(128)
     env.enableCheckpointing(30000)
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
@@ -70,22 +75,25 @@ object TvRealTimeMain2 {
     val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
       null != bean && bean.value != "-"
     })
-    val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner()).setParallelism(1)
+    val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner())
+    //schema (String, String...., Timestamp)
     tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
 
-    //接下来从mysql获取需要执行的sql以及结果表
-//    val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)
-//    for (i <- querys) {
-//      val sinkConf = new JDBCSinkFactory().getJDBCSink(i)
-//      tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
-//      val resTable = tableEnv.sqlQuery(i.select_sql)
-//      //这里的不为null判断是凭感觉加的，实际上可能不起作用
-//      if (null != resTable){
-//        resTable.insertInto(i.task_key, queryConfig)
-//      }
-//    }
 
-    tableEnv.sqlQuery("select count(1) from (select uuid from tv_heart group by uuid) tmp_uuid").toRetractStream[Long](queryConfig).print()
+//    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '24' hour) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(uuid) from tv_heart group by cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date), HOP(rowtime, INTERVAL '1' minute, INTERVAL '24' hour)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
+    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '2' minute) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(uuid) from tv_heart group by cast(DATE_FORMAT(rowtime, '%MM') as Date), HOP(rowtime, INTERVAL '1' minute, INTERVAL '2' minute)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
+
+//    val jdbcSink = JDBCAppendTableSink.builder()
+//      .setDrivername("com.mysql.jdbc.Driver")
+//      .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv_realtime")
+//      .setQuery("insert into test(end_window) values(?)")
+//      .setUsername("dtadmin")
+//      .setPassword("Dtadmin123!@#")
+//      .setParameterTypes(createTypeInformation[Timestamp])
+//      .build()
+//    tableEnv.registerTableSink("sink1",Array("end_window") , Array(createTypeInformation[Timestamp]), jdbcSink)
+
+
     env.execute(flinkKeyConf.appName)
   }
 }

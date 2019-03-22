@@ -7,8 +7,6 @@
 object Test {
 
   def main(args: Array[String]): Unit = {
-    val a = "insert into bftv.tv_display_window_active(end_window,counts) values(?,?)"
-    println(a)
-    println(a.stripMargin)
+
   }
 }

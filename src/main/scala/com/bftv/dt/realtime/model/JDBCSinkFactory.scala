@@ -1,11 +1,12 @@
 package com.bftv.dt.realtime.model
 
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 import com.bftv.dt.realtime.storage.MysqlDao
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.io.jdbc.JDBCAppendTableSink
 import org.apache.flink.streaming.api.scala._
 import org.slf4j.LoggerFactory
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -26,6 +27,7 @@ class JDBCSinkFactory {
   maps += ("CHAR_TYPE" -> createTypeInformation[String])
   maps += ("FLOAT_TYPE" -> createTypeInformation[Float])
   maps += ("BIGINT_TYPE" -> createTypeInformation[Long])
+  maps += ("DATE_TYPE" -> createTypeInformation[Date])
 
   val logger = LoggerFactory.getLogger(this.getClass)
 
