@@ -78,15 +78,7 @@ object TvRealTimeMain2 {
     //schema (String, String...., Timestamp)
     tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
 
-//    val jdbcSink = JDBCAppendTableSink.builder()
-//      .setDrivername("com.mysql.jdbc.Driver")
-//      .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv")
-//      .setQuery("insert into tv_display_window_active_total(end_window,dt,counts) values(?,?,?)")
-//      .setUsername("dtadmin")
-//      .setPassword("Dtadmin123!@#")
-//      .setParameterTypes(createTypeInformation[Timestamp], createTypeInformation[Date], createTypeInformation[Long])
-//      .build()
-//    tableEnv.registerTableSink("sink1",Array("end_window", "dt", "counts") , Array(createTypeInformation[Timestamp], createTypeInformation[Date], createTypeInformation[Long]), jdbcSink)
+
     tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '5' minute) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(distinct(uuid)) as counts from tv_heart group by HOP(rowtime, INTERVAL '1' minute, INTERVAL '5' minute), cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) having CURRENT_DATE = cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
     env.execute(flinkKeyConf.appName)
   }
