@@ -2,7 +2,6 @@ package com.bftv.dt.realtime.main
 
 import java.sql.{Date, Timestamp}
 import java.util.{Properties, TimeZone}
-
 import com.bftv.dt.realtime.format.LogFormator
 import com.bftv.dt.realtime.model.{FlinkQuery, JDBCSinkFactory, MyAssigner, MyMapFunction}
 import com.bftv.dt.realtime.storage.MysqlDao
@@ -13,13 +12,13 @@ import org.apache.flink.api.java.io.jdbc.JDBCAppendTableSink
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala._
 import org.slf4j.LoggerFactory
-
 import scala.collection.mutable.Set
 
 /**
@@ -79,20 +78,16 @@ object TvRealTimeMain2 {
     //schema (String, String...., Timestamp)
     tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
 
-
-    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '24' hour) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(uuid) from tv_heart group by cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date), HOP(rowtime, INTERVAL '1' minute, INTERVAL '24' hour)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
-
+//    val jdbcSink = JDBCAppendTableSink.builder()
+//      .setDrivername("com.mysql.jdbc.Driver")
+//      .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv")
+//      .setQuery("insert into tv_display_window_active_total(end_window,dt,counts) values(?,?,?)")
+//      .setUsername("dtadmin")
+//      .setPassword("Dtadmin123!@#")
+//      .setParameterTypes(createTypeInformation[Timestamp], createTypeInformation[Date], createTypeInformation[Long])
+//      .build()
+//    tableEnv.registerTableSink("sink1",Array("end_window", "dt", "counts") , Array(createTypeInformation[Timestamp], createTypeInformation[Date], createTypeInformation[Long]), jdbcSink)
+    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '5' minute) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(distinct(uuid)) as counts from tv_heart group by HOP(rowtime, INTERVAL '1' minute, INTERVAL '5' minute), cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) having CURRENT_DATE = cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
     env.execute(flinkKeyConf.appName)
-
-
-    //    val jdbcSink = JDBCAppendTableSink.builder()
-    //      .setDrivername("com.mysql.jdbc.Driver")
-    //      .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv_realtime")
-    //      .setQuery("insert into test(end_window) values(?)")
-    //      .setUsername("dtadmin")
-    //      .setPassword("Dtadmin123!@#")
-    //      .setParameterTypes(createTypeInformation[Timestamp])
-    //      .build()
-    //    tableEnv.registerTableSink("sink1",Array("end_window") , Array(createTypeInformation[Timestamp]), jdbcSink)
   }
 }
