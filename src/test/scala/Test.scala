@@ -1,3 +1,6 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+
 /**
   * desc
   *
@@ -7,6 +10,8 @@
 object Test {
 
   def main(args: Array[String]): Unit = {
-
+    val format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    val a = format.format(new Date(System.currentTimeMillis()))
+    println(a)
   }
 }

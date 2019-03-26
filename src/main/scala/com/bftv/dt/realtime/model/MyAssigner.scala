@@ -90,4 +90,8 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
   override def getCurrentWatermark: Watermark = {
     new Watermark(currentMaxTimestamp - maxOutOrderness)
   }
+
+  def main(args: Array[String]): Unit = {
+
+  }
 }
