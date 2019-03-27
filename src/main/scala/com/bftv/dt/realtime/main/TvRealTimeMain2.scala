@@ -75,15 +75,16 @@ object TvRealTimeMain2 {
     //kafkaConsumer.setStartFromGroupOffsets()
 
     val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
-      null != bean && bean.value != "-" && bean.uuid != "-"
+      null != bean && bean.jsonvalue != "-" && bean.uuid != "-"
     })
     val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner())
     //schema (String, String...., Timestamp)
 
-    tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
+    tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
+
     tableEnv.registerFunction("myCount", new MyAggregateFunction)
 
-    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '1' day) as end_window, myCount(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '1' minute, INTERVAL '1' day)").toAppendStream[(Timestamp, Long)](queryConfig).print()
+    tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, page_title, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute), page_title").orderBy('counts).toAppendStream[(Timestamp,String, Long)](queryConfig).print()
 
     env.execute(flinkKeyConf.appName)
   }

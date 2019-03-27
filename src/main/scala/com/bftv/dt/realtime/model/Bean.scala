@@ -28,17 +28,16 @@ case class Bean (var country: String = "-",
                  var itime: String = "-",
                  var uuid: String = "-",
                  var gid:String = "-",
-                 var value: String = "-"
-//                 sn:String = "-",
-//                 plt_ver: String = "-",
-//                 package_name: String = "-",
-//                 pid: String = "-",
-//                 lau_ver: String = "-",
-//                 plt: String = "-",
-//                 softid: String = "-",
-//                 page_title: String = "-",
-//                 ip: String = "-",
-
+                 var jsonvalue: String = "-",
+                 var sn:String = "-",
+                 var plt_ver: String = "-",
+                 var package_name: String = "-",
+                 var pid: String = "-",
+                 var lau_ver: String = "-",
+                 var plt: String = "-",
+                 var softid: String = "-",
+                 var page_title: String = "-",
+                 var ip: String = "-"
                 )
 object App{
   def main(args: Array[String]): Unit = {

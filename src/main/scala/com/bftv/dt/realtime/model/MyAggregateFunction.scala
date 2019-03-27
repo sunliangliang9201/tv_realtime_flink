@@ -15,7 +15,7 @@ import scala.collection.mutable.Set
 class MyAggregateFunction extends AggregateFunction[Long, CountAccum]{
 
   val format = new SimpleDateFormat("yyyy-MM-dd")
-  var currentDtTimestamp = 0L
+  var currentDtTimestamp = ""
 
   override def createAccumulator(): CountAccum = {
     CountAccum()
@@ -26,14 +26,24 @@ class MyAggregateFunction extends AggregateFunction[Long, CountAccum]{
   }
 
   def accumulate(accumulator: CountAccum, dt: String, uuid: String): Unit ={
-    val timestamp = format.parse(dt).getTime
-    if (timestamp > currentDtTimestamp){
-      accumulator.uuidSet.clear()
-      currentDtTimestamp = timestamp
+    if (currentDtTimestamp == ""){
+      currentDtTimestamp = dt
       accumulator.uuidSet += uuid
-    }else if (timestamp == currentDtTimestamp){
+    }else if (dt > currentDtTimestamp){
+      currentDtTimestamp = dt
+      accumulator.uuidSet.clear()
+      accumulator.uuidSet += uuid
+    }else if (dt == currentDtTimestamp){
       accumulator.uuidSet += uuid
     }
+//    val timestamp = format.parse(dt).getTime
+//    if (timestamp > currentDtTimestamp){
+//      accumulator.uuidSet.clear()
+//      currentDtTimestamp = timestamp
+//      accumulator.uuidSet += uuid
+//    }else if (timestamp == currentDtTimestamp){
+//      accumulator.uuidSet += uuid
+//    }
   }
 
   def merge(accumulator: CountAccum, iter: Iterable[CountAccum]): Unit ={

@@ -87,16 +87,16 @@ class SDKFormator extends LogFormator {
       bean.itime = res.getOrElse("itime", "-")
       bean.uuid = res.getOrElse("uuid", "-")
       bean.gid = res.getOrElse("gid", "-")
-      bean.value = res.getOrElse("value", "-")
-//        sn = res.getOrElse("sn", "-"),
-//        plt_ver = res.getOrElse("plt_ver", "-"),
-//        package_name = res.getOrElse("package_name", "-"),
-//        pid = res.getOrElse("pid", "-"),
-//        lau_ver = res.getOrElse("lau_ver", "-"),
-//        plt = res.getOrElse("plt", "-"),
-//        softid = res.getOrElse("softid", "-"),
-//        page_title = res.getOrElse("page_title", "-"),
-//        ip = res.getOrElse("ip", "-"),
+      bean.jsonvalue = res.getOrElse("value", "-")
+      bean.sn = res.getOrElse("sn", "-")
+      bean.plt_ver = res.getOrElse("plt_ver", "-")
+      bean.package_name = res.getOrElse("package_name", "-")
+      bean.pid = res.getOrElse("pid", "-")
+      bean.lau_ver = res.getOrElse("lau_ver", "-")
+      bean.plt = res.getOrElse("plt", "-")
+      bean.softid = res.getOrElse("softid", "-")
+      bean.page_title = res.getOrElse("page_title", "-")
+      bean.ip = res.getOrElse("ip", "-")
 
       return bean
     }catch {
