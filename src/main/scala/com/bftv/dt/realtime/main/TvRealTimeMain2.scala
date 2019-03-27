@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.{Properties, TimeZone}
 
 import com.bftv.dt.realtime.format.LogFormator
-import com.bftv.dt.realtime.model.{FlinkQuery, JDBCSinkFactory, MyAssigner, MyMapFunction}
+import com.bftv.dt.realtime.model._
 import com.bftv.dt.realtime.storage.MysqlDao
 import com.bftv.dt.realtime.utils.Constant
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
@@ -79,10 +79,11 @@ object TvRealTimeMain2 {
     })
     val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner())
     //schema (String, String...., Timestamp)
-    val format = new SimpleDateFormat("mm")
-    tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
 
-    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '3' minute) as end_window, cast(DATE_FORMAT(rowtime, '%i') as varchar) as dt, count(distinct(uuid)) as counts from tv_heart group by HOP(rowtime, INTERVAL '1' minute, INTERVAL '3' minute), cast(DATE_FORMAT(rowtime, '%i') as varchar)").toAppendStream[(Timestamp, String, Long)](queryConfig).print()
+    tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
+    tableEnv.registerFunction("myCount", new MyAggregateFunction)
+
+    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '1' day) as end_window, myCount(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '1' minute, INTERVAL '1' day)").toAppendStream[(Timestamp, Long)](queryConfig).print()
 
     env.execute(flinkKeyConf.appName)
   }

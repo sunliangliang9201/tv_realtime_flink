@@ -2,8 +2,9 @@ package com.bftv.dt.realtime.main
 
 import java.sql.Timestamp
 import java.util.{Properties, TimeZone}
+
 import com.bftv.dt.realtime.format.LogFormator
-import com.bftv.dt.realtime.model.{FlinkQuery, JDBCSinkFactory, MyAssigner, MyMapFunction}
+import com.bftv.dt.realtime.model._
 import com.bftv.dt.realtime.storage.MysqlDao
 import com.bftv.dt.realtime.utils.Constant
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
@@ -75,6 +76,9 @@ object TvRealTimeMain {
       })
       val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner())
       tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'value, 'rowtime.rowtime)
+
+      //注册自定聚合函数
+      tableEnv.registerFunction("myCount", new MyAggregateFunction)
 
       //接下来从mysql获取需要执行的sql以及结果表
       val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)

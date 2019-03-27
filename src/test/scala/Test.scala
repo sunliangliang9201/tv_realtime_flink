@@ -10,8 +10,11 @@ import java.util.Date
 object Test {
 
   def main(args: Array[String]): Unit = {
-    val format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-    val a = format.format(new Date(System.currentTimeMillis()))
+    val a = new Date()
     println(a)
+    val b = new Date(123456845844L)
+    println(b)
+    println()
+
   }
 }
