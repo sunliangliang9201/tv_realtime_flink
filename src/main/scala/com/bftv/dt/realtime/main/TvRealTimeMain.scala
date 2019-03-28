@@ -78,7 +78,7 @@ object TvRealTimeMain {
       tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
 
       //注册自定聚合函数
-      //tableEnv.registerFunction("myCount", new MyAggregateFunction)
+      tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
       //接下来从mysql获取需要执行的sql以及结果表
       val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)

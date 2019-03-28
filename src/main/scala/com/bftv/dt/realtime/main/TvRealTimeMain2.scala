@@ -77,14 +77,25 @@ object TvRealTimeMain2 {
     val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
       null != bean && bean.jsonvalue != "-" && bean.uuid != "-"
     })
+
     val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner())
     //schema (String, String...., Timestamp)
 
     tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
 
-    tableEnv.registerFunction("myCount", new MyAggregateFunction)
+    tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
-    tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, page_title, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute), page_title").orderBy('counts).toAppendStream[(Timestamp,String, Long)](queryConfig).print()
+    val jdbcSink = JDBCAppendTableSink.builder()
+      .setDrivername("com.mysql.jdbc.Driver")
+      .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv_realtime")
+      .setQuery("insert into tv_display_window_active_total(end_window,counts) values(?,?)")
+      .setUsername("dtadmin")
+      .setPassword("Dtadmin123!@#")
+      .setParameterTypes(createTypeInformation[Timestamp], createTypeInformation[Long])
+      .build()
+    tableEnv.registerTableSink("sink1", Array("end_window", "counts") , Array(createTypeInformation[Timestamp], createTypeInformation[Long]), jdbcSink)
+
+    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%i') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day)").toAppendStream[(Timestamp, Long)](queryConfig).print()
 
     env.execute(flinkKeyConf.appName)
   }
