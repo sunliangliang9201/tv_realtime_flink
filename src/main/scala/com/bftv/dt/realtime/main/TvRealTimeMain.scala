@@ -37,17 +37,17 @@ object TvRealTimeMain {
       System.exit(1)
     }
     logger.info("Success load the flinkKey config from mysql !")
-
+    val checkpointTime = args(0).toInt
     try{
       val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
       env.setMaxParallelism(128)
-      env.enableCheckpointing(120000)
+      env.enableCheckpointing(checkpointTime)
       env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
       env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, Time.seconds(15)))
       //env.setStateBackend(new FsStateBackend("e:/flink_checkpoint"))
       //env.registerCachedFile("e:/ip_area_isp.txt", "ips")
       env.registerCachedFile("hdfs://cluster/test/sunliangliang/ip_area_isp.txt", "ips")
-      env.getCheckpointConfig.setMinPauseBetweenCheckpoints(30000)
+      env.getCheckpointConfig.setMinPauseBetweenCheckpoints(60000)
       env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
       env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE)
       env.getConfig.setUseSnapshotCompression(true)

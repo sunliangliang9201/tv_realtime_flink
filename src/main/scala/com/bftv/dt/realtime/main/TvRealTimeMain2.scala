@@ -45,12 +45,12 @@ object TvRealTimeMain2 {
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
     env.setMaxParallelism(128)
-    env.enableCheckpointing(30000)
+    env.enableCheckpointing(240000)
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
     env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, Time.seconds(15)))
     env.registerCachedFile("e:/ip_area_isp.txt", "ips")
     //env.registerCachedFile("hdfs://cluster/test/sunliangliang/ip_area_isp.txt", "ips")
-    env.getCheckpointConfig.setMinPauseBetweenCheckpoints(5000)
+    env.getCheckpointConfig.setMinPauseBetweenCheckpoints(30000)
     env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
     env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE)
     env.getConfig.setUseSnapshotCompression(true)
@@ -95,7 +95,7 @@ object TvRealTimeMain2 {
       .build()
     tableEnv.registerTableSink("sink1", Array("end_window", "counts") , Array(createTypeInformation[Timestamp], createTypeInformation[Long]), jdbcSink)
 
-    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%i') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day)").toAppendStream[(Timestamp, Long)](queryConfig).print()
+    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(distinct(uuid)) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
 
     env.execute(flinkKeyConf.appName)
   }

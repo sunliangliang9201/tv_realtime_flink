@@ -12,6 +12,9 @@ import scala.collection.mutable.Set
   */
 class MyAggregateFunction extends AggregateFunction[Long, CountAccum]{
 
+  //这里做个备份
+  //select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day)
+
   override def createAccumulator(): CountAccum = {
     CountAccum(Set[String]())
   }
