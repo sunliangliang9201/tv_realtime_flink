@@ -1,7 +1,6 @@
 package com.bftv.dt.realtime.main
 
-import java.sql.{Date, Timestamp}
-import java.text.SimpleDateFormat
+import java.sql.Timestamp
 import java.util.{Properties, TimeZone}
 
 import com.bftv.dt.realtime.format.LogFormator
@@ -12,9 +11,10 @@ import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.time.Time
 import org.apache.flink.api.java.io.jdbc.JDBCAppendTableSink
 import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema
@@ -22,7 +22,6 @@ import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala._
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.Set
 
 /**
   * 主类入口：初始化各种配置，并创建关键对象；包含主要逻辑
@@ -85,17 +84,8 @@ object TvRealTimeMain2 {
 
     tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
-    val jdbcSink = JDBCAppendTableSink.builder()
-      .setDrivername("com.mysql.jdbc.Driver")
-      .setDBUrl("jdbc:mysql://103.26.158.76:3306/bftv_realtime")
-      .setQuery("insert into tv_display_window_active_total(end_window,counts) values(?,?)")
-      .setUsername("dtadmin")
-      .setPassword("Dtadmin123!@#")
-      .setParameterTypes(createTypeInformation[Timestamp], createTypeInformation[Long])
-      .build()
-    tableEnv.registerTableSink("sink1", Array("end_window", "counts") , Array(createTypeInformation[Timestamp], createTypeInformation[Long]), jdbcSink)
 
-    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, count(distinct(uuid)) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date)").toAppendStream[(Timestamp, Date, Long)](queryConfig).print()
+    tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, page_title, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute)")
 
     env.execute(flinkKeyConf.appName)
   }
