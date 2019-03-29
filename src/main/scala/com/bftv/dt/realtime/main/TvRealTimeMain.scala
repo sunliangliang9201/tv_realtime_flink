@@ -2,7 +2,6 @@ package com.bftv.dt.realtime.main
 
 import java.sql.Timestamp
 import java.util.{Properties, TimeZone}
-
 import com.bftv.dt.realtime.format.LogFormator
 import com.bftv.dt.realtime.model._
 import com.bftv.dt.realtime.storage.MysqlDao
@@ -38,18 +37,21 @@ object TvRealTimeMain {
     }
     logger.info("Success load the flinkKey config from mysql !")
     val checkpointTime = args(0).toInt
+    val checkpointDuring = args(1).toInt
     try{
       val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
       env.setMaxParallelism(128)
-      env.enableCheckpointing(checkpointTime)
       env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
       env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, Time.seconds(15)))
-      //env.setStateBackend(new FsStateBackend("e:/flink_checkpoint"))
       //env.registerCachedFile("e:/ip_area_isp.txt", "ips")
       env.registerCachedFile("hdfs://cluster/test/sunliangliang/ip_area_isp.txt", "ips")
-      env.getCheckpointConfig.setMinPauseBetweenCheckpoints(60000)
-      env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
-      env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE)
+      env.enableCheckpointing(checkpointTime)
+      //env.setStateBackend(new FsStateBackend("e:/flink_checkpoint"))
+      env.getCheckpointConfig.setMinPauseBetweenCheckpoints(checkpointDuring)
+      //env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
+      env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.AT_LEAST_ONCE)
+      env.getCheckpointConfig.setFailOnCheckpointingErrors(false)
+      env.getCheckpointConfig.setMaxConcurrentCheckpoints(1)
       env.getConfig.setUseSnapshotCompression(true)
 
       //table&query env config, 注意：不要轻易指定变量的父类类型，吃了大亏了已经！！！

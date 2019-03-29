@@ -14,6 +14,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09
@@ -44,7 +45,7 @@ object TvRealTimeMain2 {
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
     env.setMaxParallelism(128)
-    env.enableCheckpointing(240000)
+    //env.enableCheckpointing(240000)
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
     env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, Time.seconds(15)))
     env.registerCachedFile("e:/ip_area_isp.txt", "ips")
@@ -84,9 +85,10 @@ object TvRealTimeMain2 {
 
     tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
+//    tableEnv.sqlQuery("select page_title, count(uuid) as counts from tv_heart").keyBy("page_title").window(TumblingProcessingTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(1))).process(new MyTopNFunction(5))
+//    ds2.map(line => (line.uuid, line.page_title, 'rowtime.rowtime)).keyBy("page_title").window(TumblingProcessingTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(1))).process(new MyTopNFunction(5)).print()
 
-    tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, page_title, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute)")
-
+    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar)").toAppendStream[(Timestamp, Long)](queryConfig).print()
     env.execute(flinkKeyConf.appName)
   }
 }
