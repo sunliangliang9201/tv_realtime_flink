@@ -48,7 +48,7 @@ object TvRealTimeMain {
       env.enableCheckpointing(checkpointTime)
       //env.setStateBackend(new FsStateBackend("e:/flink_checkpoint"))
       env.getCheckpointConfig.setMinPauseBetweenCheckpoints(checkpointDuring)
-      //env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
+      env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
       env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.AT_LEAST_ONCE)
       env.getCheckpointConfig.setFailOnCheckpointingErrors(false)
       env.getCheckpointConfig.setMaxConcurrentCheckpoints(1)
@@ -76,7 +76,7 @@ object TvRealTimeMain {
       val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
         null != bean && bean.jsonvalue != "-" && bean.uuid != "-"
       })
-      val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner())
+      val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner()).keyBy(_.uuid)
       tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
 
       //注册自定聚合函数

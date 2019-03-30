@@ -51,8 +51,10 @@ object TvRealTimeMain2 {
     env.registerCachedFile("e:/ip_area_isp.txt", "ips")
     //env.registerCachedFile("hdfs://cluster/test/sunliangliang/ip_area_isp.txt", "ips")
     env.getCheckpointConfig.setMinPauseBetweenCheckpoints(30000)
-    env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
-    env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE)
+    //env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
+    env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.AT_LEAST_ONCE)
+    env.getCheckpointConfig.setFailOnCheckpointingErrors(false)
+    env.getCheckpointConfig.setMaxConcurrentCheckpoints(1)
     env.getConfig.setUseSnapshotCompression(true)
 
     //table&query env config, 注意：不要轻易指定变量的父类类型，吃了大亏了已经！！！
@@ -78,17 +80,14 @@ object TvRealTimeMain2 {
       null != bean && bean.jsonvalue != "-" && bean.uuid != "-"
     })
 
-    val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner())
+    val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner()).keyBy(_.uuid)
     //schema (String, String...., Timestamp)
 
     tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
 
     tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
-//    tableEnv.sqlQuery("select page_title, count(uuid) as counts from tv_heart").keyBy("page_title").window(TumblingProcessingTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(1))).process(new MyTopNFunction(5))
-//    ds2.map(line => (line.uuid, line.page_title, 'rowtime.rowtime)).keyBy("page_title").window(TumblingProcessingTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(1))).process(new MyTopNFunction(5)).print()
-
-    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar)").toAppendStream[(Timestamp, Long)](queryConfig).print()
+  tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, country, province, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), country, province").toAppendStream[(Timestamp, String, String, Long)](queryConfig).print()
     env.execute(flinkKeyConf.appName)
   }
 }
