@@ -75,9 +75,8 @@ object TvRealTimeMain {
 
       val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
         null != bean && bean.jsonvalue != "-" && bean.uuid != "-"
-      })
-      val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner()).keyBy(_.uuid)
-      tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
+      }).assignTimestampsAndWatermarks(new MyAssigner()).setParallelism(10)
+      tableEnv.registerDataStream("tv_heart", ds, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
 
       //注册自定聚合函数
       tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
@@ -87,11 +86,7 @@ object TvRealTimeMain {
       for (i <- querys) {
         val sinkConf = new JDBCSinkFactory().getJDBCSink(i)
         tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
-        val resTable = tableEnv.sqlQuery(i.select_sql)
-        //这里的不为null判断是凭感觉加的，实际上可能不起作用
-        if (null != resTable){
-          resTable.insertInto(i.task_key, queryConfig)
-        }
+        tableEnv.sqlQuery(i.select_sql).insertInto(i.task_key, queryConfig)
       }
       env.execute(flinkKeyConf.appName)
     }catch {

@@ -45,26 +45,22 @@ object TvRealTimeMain2 {
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
     env.setMaxParallelism(128)
-    //env.enableCheckpointing(240000)
+    env.enableCheckpointing(60000)
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
     env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, Time.seconds(15)))
     env.registerCachedFile("e:/ip_area_isp.txt", "ips")
-    //env.registerCachedFile("hdfs://cluster/test/sunliangliang/ip_area_isp.txt", "ips")
     env.getCheckpointConfig.setMinPauseBetweenCheckpoints(30000)
-    //env.getCheckpointConfig.enableExternalizedCheckpoints(ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
     env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.AT_LEAST_ONCE)
     env.getCheckpointConfig.setFailOnCheckpointingErrors(false)
     env.getCheckpointConfig.setMaxConcurrentCheckpoints(1)
     env.getConfig.setUseSnapshotCompression(true)
 
-    //table&query env config, 注意：不要轻易指定变量的父类类型，吃了大亏了已经！！！
     val tableEnv = TableEnvironment.getTableEnvironment(env)
     val tableConfig = tableEnv.getConfig
     tableConfig.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"))
     val queryConfig = tableEnv.queryConfig
     queryConfig.withIdleStateRetentionTime(Time.hours(12), Time.hours(24))
 
-    //引入kafka数据流，两种方式，一种是使用stream API，另一种是使用table API，为了更容易理解先使用第一种方式
     val prop: Properties = new Properties()
     prop.setProperty("bootstrap.servers", flinkKeyConf.brolerList)
     prop.setProperty("group.id", flinkKeyConf.groupID)
@@ -74,20 +70,16 @@ object TvRealTimeMain2 {
     val logFormator = Class.forName(Constant.FORMATOR_PACACKE_PREFIX + flinkKeyConf.formator).newInstance().asInstanceOf[LogFormator]
     val kafkaConsumer = new FlinkKafkaConsumer09[String](topicList, new SimpleStringSchema, prop)
     kafkaConsumer.setStartFromLatest()
-    //kafkaConsumer.setStartFromGroupOffsets()
 
     val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
       null != bean && bean.jsonvalue != "-" && bean.uuid != "-"
-    })
+    }).assignTimestampsAndWatermarks(new MyAssigner()).setParallelism(4)
 
-    val ds2 = ds.assignTimestampsAndWatermarks(new MyAssigner()).keyBy(_.uuid)
-    //schema (String, String...., Timestamp)
-
-    tableEnv.registerDataStream("tv_heart", ds2, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
+    tableEnv.registerDataStream("tv_heart", ds, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
 
     tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
-  tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, country, province, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), country, province").toAppendStream[(Timestamp, String, String, Long)](queryConfig).print()
+  tableEnv.sqlQuery("select province from tv_heart").toAppendStream[String](queryConfig).print()
     env.execute(flinkKeyConf.appName)
   }
 }
