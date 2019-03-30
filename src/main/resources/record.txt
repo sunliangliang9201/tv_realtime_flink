@@ -1,0 +1,22 @@
+#当天累计uv：
+##第一种：利用日期分组实现了去除过去24小时包含前一天的情况，但是还是会插入昨天的数据，其实关键点不在这里，关键点是数据倾斜的问题
+当前分组只有1个或者2个，比如2019-03-25 和2019-03-026两个分组，当checkpoint的时候压力非常大！！导致崩溃
+###select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window,cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt count(distinct(uuid)) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date)
+
+##第二种：比第一种好的一点是不会插入昨天的数据，自己实现的myAggreOne，但是后来发现所有所有的一些全是数据倾斜到一个线程中进行checkpoint压力过大
+###select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day)
+
+##第三种：降低了需求标准，通过省份的分组获得多个分组，目的是加大并行度！！！
+###select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, province, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), province
+
+##第四种：这种情况预先进行省份城市分组作为新的注册table，这种情况虽然降低了每一个过程的压力，但是可拓展性不强！
+
+
+#实时活跃：
+##其中这种sql很明显也是一个并行度，但是窗口小，处理起来还算容易
+###select TUMBLE_END(rowtime, INTERVAL '5' minute) as end_window, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '5' minute)
+
+
+#实时地区活跃：
+##这种多个分组的情况，并行度很高！！所以这种是最优的！
+###select TUMBLE_END(rowtime, INTERVAL '5' minute) as end_window, province, city, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '5' minute), province, city
