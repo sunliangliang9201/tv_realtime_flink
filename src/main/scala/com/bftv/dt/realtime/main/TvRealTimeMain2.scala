@@ -75,6 +75,7 @@ object TvRealTimeMain2 {
     tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
     tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '1' minute, INTERVAL '1' day)").toAppendStream[(Timestamp, Long)](queryConfig).print()
+
     env.execute(flinkKeyConf.appName)
   }
 }

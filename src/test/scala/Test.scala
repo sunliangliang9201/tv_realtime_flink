@@ -1,7 +1,8 @@
 import java.text.SimpleDateFormat
 import java.util.Date
-
 import java.util.BitSet
+
+import com.bftv.dt.realtime.utils.MyBloomFilter
 
 /**
   * desc
@@ -12,10 +13,6 @@ import java.util.BitSet
 object Test {
 
   def main(args: Array[String]): Unit = {
-    val bitset1 = new BitSet(10)
-    val bitset2 = new BitSet(8)
-    bitset1.set(1, true)
-    bitset1.andNot(bitset2)
-    println(bitset1.get(2))
+    println(new MyBloomFilter().bitSetSize)
   }
 }

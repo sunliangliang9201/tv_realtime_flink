@@ -13,7 +13,7 @@ import scala.util.hashing.MurmurHash3
 class MyBloomFilter {
 
   //位数组的大小，存放hash值
-  val bitSetSize = 2 << 19
+  val bitSetSize = 1 << 22
 
   //位数组
   val bitSet = new BitSet(bitSetSize)
