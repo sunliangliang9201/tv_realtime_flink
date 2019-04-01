@@ -12,6 +12,9 @@
 ###select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, province, count(distinct(uuid)) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), province, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date)
 
 ##第四种：这种情况预先进行省份城市分组作为新的注册table，这种情况虽然降低了每一个过程的压力，但是可拓展性不强！
+还没有测试
+
+##第五种：自己实现一个blommfilter来实现聚合，这样就避免了checkpoint需要存历史uuid的耗性能导致程序崩溃的问题
 
 
 #实时活跃：

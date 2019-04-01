@@ -1,6 +1,8 @@
-package com.bftv.dt.realtime.model
+package com.bftv.dt.realtime.utils
 
 import java.sql.{Date, Timestamp}
+
+import com.bftv.dt.realtime.model.FlinkQuery
 import com.bftv.dt.realtime.storage.MysqlDao
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.io.jdbc.JDBCAppendTableSink

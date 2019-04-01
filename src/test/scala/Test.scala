@@ -1,6 +1,9 @@
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import java.util.BitSet
+
+
 /**
   * desc
   *
@@ -10,11 +13,10 @@ import java.util.Date
 object Test {
 
   def main(args: Array[String]): Unit = {
-    val a = new Date()
-    println(a)
-    val b = new Date(123456845844L)
-    println(b)
-    println()
-
+    val bitset1 = new BitSet(10)
+    val bitset2 = new BitSet(8)
+    bitset1.set(1, true)
+    bitset1.andNot(bitset2)
+    println(bitset1.get(2))
   }
 }

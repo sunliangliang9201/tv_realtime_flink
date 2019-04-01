@@ -1,8 +1,9 @@
 package com.bftv.dt.realtime.model
 
 
+import com.bftv.dt.realtime.utils.MyBloomFilter
 import org.apache.flink.table.functions.AggregateFunction
-import scala.collection.mutable.Set
+
 
 /**
   * 自定义聚合函数，目的是当日期切换的时候清楚昨天的数据
@@ -16,20 +17,25 @@ class MyAggregateFunction extends AggregateFunction[Long, CountAccum]{
   //select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day)
 
   override def createAccumulator(): CountAccum = {
-    CountAccum(Set[String]())
+    CountAccum(new MyBloomFilter)
   }
 
   override def getValue(accumulator: CountAccum): Long = {
-    accumulator.countsSet.size
+    accumulator.counts
   }
 
   def accumulate(accumulator: CountAccum, dt: String, uuidStr: String): Unit ={
     if (accumulator.currentDt == "" || dt > accumulator.currentDt){
-      accumulator.countsSet.clear()
+      accumulator.counts = 0L
       accumulator.currentDt = dt
-      accumulator.countsSet += uuidStr
+      accumulator.bloomFilter.bitSet.clear()
+      accumulator.bloomFilter.hashValue(uuidStr)
+      accumulator.counts += 1
     }else if (dt == accumulator.currentDt){
-      accumulator.countsSet += uuidStr
+      if (!accumulator.bloomFilter.exists(uuidStr)){
+        accumulator.bloomFilter.hashValue(uuidStr)
+        accumulator.counts += 1
+      }
     }
   }
 
@@ -37,14 +43,16 @@ class MyAggregateFunction extends AggregateFunction[Long, CountAccum]{
     val it = iter.iterator
     while (it.hasNext){
       val accum = it.next()
-      accumulator.countsSet.union(accum.countsSet)
+      accumulator.counts += accum.counts
+      accumulator.bloomFilter.bitSet.andNot(accum.bloomFilter.bitSet)
     }
   }
 
   def reSet(accumulator: CountAccum) :CountAccum ={
-    accumulator.countsSet.clear()
+    accumulator.bloomFilter.bitSet.clear()
+    accumulator.counts = 0L
     accumulator
   }
 }
 
-case class CountAccum(var countsSet: Set[String], var currentDt: String = "")
+case class CountAccum(bloomFilter: MyBloomFilter, var currentDt: String = "", var counts: Long = 0L)
