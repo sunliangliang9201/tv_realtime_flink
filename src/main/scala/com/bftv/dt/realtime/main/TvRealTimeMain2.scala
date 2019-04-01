@@ -79,7 +79,8 @@ object TvRealTimeMain2 {
 
     tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
-  tableEnv.sqlQuery("select province from tv_heart").toAppendStream[String](queryConfig).print()
+    //实时查看第三方应用的TopN
+    tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, page_title, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute), page_title").toAppendStream[(Timestamp, String, Long)](queryConfig).print()
     env.execute(flinkKeyConf.appName)
   }
 }

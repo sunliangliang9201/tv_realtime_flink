@@ -9,6 +9,8 @@
 ##第三种：降低了需求标准，通过省份的分组获得多个分组，目的是加大并行度！！！
 ###select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, province, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), province
 
+###select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date) as dt, province, count(distinct(uuid)) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day), province, cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as Date)
+
 ##第四种：这种情况预先进行省份城市分组作为新的注册table，这种情况虽然降低了每一个过程的压力，但是可拓展性不强！
 
 
