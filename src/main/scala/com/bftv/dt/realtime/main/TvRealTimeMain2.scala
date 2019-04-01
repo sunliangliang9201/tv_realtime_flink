@@ -10,12 +10,16 @@ import com.bftv.dt.realtime.utils.Constant
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.time.Time
 import org.apache.flink.api.scala._
+import org.apache.flink.streaming.api.functions.{KeyedProcessFunction, ProcessFunction}
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema
 import org.apache.flink.table.api.TableEnvironment
 import org.apache.flink.table.api.scala._
+import org.apache.flink.types.Row
+import org.apache.flink.util.Collector
 import org.slf4j.LoggerFactory
 
 
@@ -74,7 +78,9 @@ object TvRealTimeMain2 {
 
     tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
-    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '1' minute, INTERVAL '1' day)").toAppendStream[(Timestamp, Long)](queryConfig).print()
+    //tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, page_title, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute), page_title").process(new MyTopNFunction(5)).print()
+
+    ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(1))).aggregate(new CountAgg(), new WindowResultFunction()).print()
 
     env.execute(flinkKeyConf.appName)
   }

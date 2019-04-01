@@ -53,38 +53,6 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
       return currentMaxTimestamp
     }
     timestamp
-
-    //第二种抽取方式
-//    if (timeStr == "-"){
-//      if (previousElementTimestamp != 0L){
-//        return previousElementTimestamp
-//      }else if (currentMaxTimestamp != 0L){
-//        return currentMaxTimestamp
-//      }else{
-//        return System.currentTimeMillis()
-//      }
-//    }else{
-//        try{
-//          timestamp = format.parse(timeStr).getTime
-//        }catch {
-//          case e: Exception => logger.error("parse itime`s timestamp failed ... " + e)
-//            timestamp = previousElementTimestamp
-//        }
-//    }
-//    if ((timestamp - System.currentTimeMillis()) >= 60000){
-//      if (previousElementTimestamp != 0L){
-//        return previousElementTimestamp
-//      }else if (currentMaxTimestamp != 0L){
-//        return currentMaxTimestamp
-//      }else{
-//        return System.currentTimeMillis()
-//      }
-//    }
-//    currentMaxTimestamp = max(currentMaxTimestamp, timestamp)
-//    if ((currentMaxTimestamp - timestamp) >= 30000){
-//      return currentMaxTimestamp
-//    }
-//    timestamp
   }
 
   override def getCurrentWatermark: Watermark = {
