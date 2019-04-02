@@ -16,14 +16,13 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
 
   val logger = LoggerFactory.getLogger(this.getClass)
 
-  var currentMaxTimestamp: Long = 0L
+  var currentMaxTimestamp: Long = _
 
-  val maxOutOrderness: Long = 10000L
+  val maxOutOrderness: Long = 5000L
 
   val format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
   override def extractTimestamp(element: Bean, previousElementTimestamp: Long): Long = {
-    //2019-03-19 10:29:40
     val timeStr = element.itime
     var timestamp = 0L
     //第一种抽取方式
@@ -31,6 +30,7 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
     //这种抽取时间戳可能不是最好的，但是当前最完善的
     if (timeStr == "-"){
       if (currentMaxTimestamp == 0L){
+        currentMaxTimestamp = System.currentTimeMillis()
         return System.currentTimeMillis()
       }
       return currentMaxTimestamp
@@ -42,8 +42,9 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
           timestamp = System.currentTimeMillis()
       }
     }
-    if ((timestamp - System.currentTimeMillis()) >= 60000){
+    if ((timestamp - System.currentTimeMillis()) >= 600000){
       if (currentMaxTimestamp == 0L){
+        currentMaxTimestamp = System.currentTimeMillis()
         return System.currentTimeMillis()
       }
       return currentMaxTimestamp
@@ -57,9 +58,5 @@ class MyAssigner extends AssignerWithPeriodicWatermarks[Bean]{
 
   override def getCurrentWatermark: Watermark = {
     new Watermark(currentMaxTimestamp - maxOutOrderness)
-  }
-
-  def main(args: Array[String]): Unit = {
-
   }
 }
