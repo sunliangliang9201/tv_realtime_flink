@@ -78,9 +78,12 @@ object TvRealTimeMain2 {
 
     tableEnv.registerDataStream("tv_heart", ds, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
 
-    tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
+    tableEnv.registerFunction("myAggreOne", new MyAggreOneFunction)
+    tableEnv.registerFunction("myAggreTopNOne", new MyAggreTopNOneFunction)
 
-    ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01)
+//    ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01)
+
+    tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '30' second) as end_window, myAggreTopNOne(page_title, count(uuid)) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '30' second)").toAppendStream[(Timestamp, Long)](queryConfig).print()
 
     env.execute(flinkKeyConf.appName)
   }

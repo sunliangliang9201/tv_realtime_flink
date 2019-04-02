@@ -82,8 +82,8 @@ object TvRealTimeMain {
       tableEnv.registerDataStream("tv_heart", ds, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
 
       //注册自定聚合函数
-      tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
-
+      tableEnv.registerFunction("myAggreOne", new MyAggreOneFunction)
+      tableEnv.registerFunction("myAggreTopNOne", new MyAggreTopNOneFunction)
       //接下来从mysql获取需要执行的sql以及结果表
       val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)
       for (i <- querys) {
@@ -91,8 +91,9 @@ object TvRealTimeMain {
         tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
         tableEnv.sqlQuery(i.select_sql).insertInto(i.task_key, queryConfig)
       }
-      //topN的实现方式
-      ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01)
+
+      //topN的datastream实现方式
+      ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01).setParallelism(1)
 
       env.execute(flinkKeyConf.appName)
     }catch {

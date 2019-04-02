@@ -10,10 +10,7 @@ import org.apache.flink.table.functions.AggregateFunction
   * @author sunliangliang 2019-03-10 https://github.com/sunliangliang9201/tv_realtime_flink
   * @version 1.0
   */
-class MyAggregateFunction extends AggregateFunction[Long, CountAccum]{
-
-  //这里做个备份
-  //select HOP_END(rowtime, INTERVAL '5' minute, INTERVAL '1' day) as end_window, myAggreOne(cast(DATE_FORMAT(rowtime, '%Y-%m-%d') as varchar), uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '5' minute, INTERVAL '1' day)
+class MyAggreOneFunction extends AggregateFunction[Long, CountAccum]{
 
   override def createAccumulator(): CountAccum = {
     CountAccum(new MyBloomFilter())
