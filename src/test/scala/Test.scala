@@ -13,9 +13,6 @@ import scala.collection.mutable
 object Test {
 
   def main(args: Array[String]): Unit = {
-    val map = mutable.Map[Int, Int](1 -> 1, 3 -> 3, 2 -> 2)
-    val res = map.toList.sortBy(_._2).take(5).toMap
-    val str = new JSONObject()
-    println(str)
+    println(1 << 10)
   }
 }

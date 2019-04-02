@@ -93,7 +93,7 @@ object TvRealTimeMain {
       }
 
       //topN的datastream实现方式
-      ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01).setParallelism(1)
+      //ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01).setParallelism(1)
 
       env.execute(flinkKeyConf.appName)
     }catch {

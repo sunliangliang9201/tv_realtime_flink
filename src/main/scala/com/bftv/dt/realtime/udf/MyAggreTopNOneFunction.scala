@@ -51,4 +51,4 @@ class MyAggreTopNOneFunction extends AggregateFunction[Long, CountAccum]{
   }
 }
 
-case class CountAccum(bloomFilter: MyBloomFilter, var currentDt: String = "", var counts: Long = 0L)
+//case class CountAccum(bloomFilter: MyBloomFilter, var currentDt: String = "", var counts: Long = 0L)

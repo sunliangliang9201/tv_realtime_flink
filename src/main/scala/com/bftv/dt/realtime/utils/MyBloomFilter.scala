@@ -10,10 +10,10 @@ import scala.util.hashing.MurmurHash3
   * @author sunliangliang 2019-04-01 https://github.com/sunliangliang9201/tv_realtime_flink
   * @version 1.0
   */
-class MyBloomFilter {
+class MyBloomFilter(bitSize: Int = 22) {
 
   //位数组的大小，存放hash值
-  val bitSetSize = 1 << 22
+  val bitSetSize = 1 << bitSize
 
   //位数组
   val bitSet = new BitSet(bitSetSize)

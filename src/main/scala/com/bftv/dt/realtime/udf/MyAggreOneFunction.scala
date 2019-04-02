@@ -13,7 +13,7 @@ import org.apache.flink.table.functions.AggregateFunction
 class MyAggreOneFunction extends AggregateFunction[Long, CountAccum]{
 
   override def createAccumulator(): CountAccum = {
-    CountAccum(new MyBloomFilter())
+    CountAccum(new MyBloomFilter(22))
   }
 
   override def getValue(accumulator: CountAccum): Long = {
