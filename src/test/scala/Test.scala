@@ -1,8 +1,8 @@
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.BitSet
 
-import com.bftv.dt.realtime.utils.MyBloomFilter
+
+import com.alibaba.fastjson.{JSON, JSONObject}
+
+import scala.collection.mutable
 
 /**
   * desc
@@ -13,6 +13,9 @@ import com.bftv.dt.realtime.utils.MyBloomFilter
 object Test {
 
   def main(args: Array[String]): Unit = {
-    println(new MyBloomFilter().bitSetSize)
+    val map = mutable.Map[Int, Int](1 -> 1, 3 -> 3, 2 -> 2)
+    val res = map.toList.sortBy(_._2).take(5).toMap
+    val str = new JSONObject()
+    println(str)
   }
 }

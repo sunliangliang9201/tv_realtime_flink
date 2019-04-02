@@ -49,6 +49,7 @@ object TvRealTimeMain2 {
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
     env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, Time.seconds(15)))
     env.registerCachedFile("e:/ip_area_isp.txt", "ips")
+    env.registerCachedFile("e:/page_title.txt", "page_titles")
     env.getCheckpointConfig.setMinPauseBetweenCheckpoints(30000)
     env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.AT_LEAST_ONCE)
     env.getCheckpointConfig.setFailOnCheckpointingErrors(false)
@@ -79,9 +80,7 @@ object TvRealTimeMain2 {
 
     tableEnv.registerFunction("myAggreOne", new MyAggregateFunction)
 
-    //tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, page_title, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute), page_title").process(new MyTopNFunction(5)).print()
-
-    ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(1))).aggregate(new CountAgg(), new WindowResultFunction()).print()
+    ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01)
 
     env.execute(flinkKeyConf.appName)
   }

@@ -5,13 +5,14 @@ import java.util.{Properties, TimeZone}
 import com.bftv.dt.realtime.format.LogFormator
 import com.bftv.dt.realtime.model._
 import com.bftv.dt.realtime.storage.MysqlDao
-import com.bftv.dt.realtime.udf.{MyAggregateFunction, MyAssigner, MyMapFunction}
+import com.bftv.dt.realtime.udf._
 import com.bftv.dt.realtime.utils.{Constant, JDBCSinkFactory}
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.time.Time
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema
@@ -46,6 +47,7 @@ object TvRealTimeMain {
       env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, Time.seconds(15)))
       //env.registerCachedFile("e:/ip_area_isp.txt", "ips")
       env.registerCachedFile("hdfs://cluster/test/sunliangliang/ip_area_isp.txt", "ips")
+      env.registerCachedFile("hdfs://cluster/test/sunliangliang/page_title.txt", "page_titles")
       env.enableCheckpointing(checkpointTime)
       //env.setStateBackend(new FsStateBackend("e:/flink_checkpoint"))
       env.getCheckpointConfig.setMinPauseBetweenCheckpoints(checkpointDuring)
@@ -89,6 +91,9 @@ object TvRealTimeMain {
         tableEnv.registerTableSink(i.task_key, sinkConf._2.map(_._1), sinkConf._2.map(_._2), sinkConf._1)
         tableEnv.sqlQuery(i.select_sql).insertInto(i.task_key, queryConfig)
       }
+      //topN的实现方式
+      ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01)
+
       env.execute(flinkKeyConf.appName)
     }catch {
       case e: Exception => e.printStackTrace()
