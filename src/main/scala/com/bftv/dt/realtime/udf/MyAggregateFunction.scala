@@ -1,5 +1,4 @@
-package com.bftv.dt.realtime.model
-
+package com.bftv.dt.realtime.udf
 
 import com.bftv.dt.realtime.utils.MyBloomFilter
 import org.apache.flink.table.functions.AggregateFunction

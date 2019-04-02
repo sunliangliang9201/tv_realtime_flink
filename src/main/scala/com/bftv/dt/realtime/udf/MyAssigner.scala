@@ -1,9 +1,12 @@
-package com.bftv.dt.realtime.model
+package com.bftv.dt.realtime.udf
 
 import java.text.SimpleDateFormat
+
+import com.bftv.dt.realtime.model.Bean
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks
 import org.apache.flink.streaming.api.watermark.Watermark
 import org.slf4j.LoggerFactory
+
 import scala.math._
 
 /**

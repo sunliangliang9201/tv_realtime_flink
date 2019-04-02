@@ -1,5 +1,6 @@
-package com.bftv.dt.realtime.model
+package com.bftv.dt.realtime.udf
 
+import com.bftv.dt.realtime.model.Bean
 import org.apache.flink.api.common.functions.AggregateFunction
 
 /**
