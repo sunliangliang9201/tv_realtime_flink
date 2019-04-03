@@ -27,7 +27,7 @@ class MyMapFunction(logformator: LogFormator, fields: Array[String]) extends Ric
 //    for (i <- Source.fromFile(page_titlesFile).getLines()){
 //      map += (i.split(",")(0) -> i.split(",")(1))
 //    }
-    ips = Source.fromFile(ipsFile).getLines().toArray.map(line => {
+    ips = Source.fromFile(ipsFile, "utf8").getLines().toArray.map(line => {
       (line.split("\t")(0), line.split("\t")(1), line.split("\t")(2), line.split("\t")(3), line.split("\t")(4).toLong, line.split("\t")(5).toLong)
     })
   }
