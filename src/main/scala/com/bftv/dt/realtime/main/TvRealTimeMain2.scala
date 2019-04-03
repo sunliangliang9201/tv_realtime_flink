@@ -72,7 +72,7 @@ object TvRealTimeMain2 {
     val kafkaConsumer = new FlinkKafkaConsumer09[String](topicList, new SimpleStringSchema, prop)
     kafkaConsumer.setStartFromLatest()
 
-    val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
+    val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).startNewChain().filter( bean => {
       null != bean && bean.jsonvalue != "-" && bean.uuid != "-"
     }).assignTimestampsAndWatermarks(new MyAssigner())
 

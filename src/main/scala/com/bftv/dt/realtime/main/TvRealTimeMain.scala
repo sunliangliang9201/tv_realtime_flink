@@ -76,7 +76,7 @@ object TvRealTimeMain {
       kafkaConsumer.setStartFromLatest()
       //kafkaConsumer.setStartFromGroupOffsets()
 
-      val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).filter( bean => {
+      val ds = env.addSource(kafkaConsumer).map(new MyMapFunction(logFormator, flinkKeyConf.fields)).startNewChain().filter( bean => {
         null != bean && bean.jsonvalue != "-" && bean.uuid != "-" && bean.itime != "-"
       }).assignTimestampsAndWatermarks(new MyAssigner)
       tableEnv.registerDataStream("tv_heart", ds, 'country, 'province, 'city, 'isp, 'appkey, 'ltype, 'uid, 'imei, 'userid, 'mac, 'apptoken, 'ver, 'mtype, 'version, 'androidid, 'unet, 'mos, 'itime, 'uuid, 'gid, 'jsonvalue, 'sn, 'plt_ver, 'package_name, 'pid, 'lau_ver, 'plt, 'softid, 'page_title, 'ip, 'rowtime.rowtime)
