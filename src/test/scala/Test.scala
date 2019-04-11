@@ -1,8 +1,4 @@
 
-import com.alibaba.fastjson.{JSON, JSONObject}
-import com.rabbitmq.client.ConnectionFactory
-
-import scala.collection.mutable
 
 /**
   * desc
