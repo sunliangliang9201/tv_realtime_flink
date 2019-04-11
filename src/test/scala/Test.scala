@@ -1,6 +1,6 @@
 
-
 import com.alibaba.fastjson.{JSON, JSONObject}
+import com.rabbitmq.client.ConnectionFactory
 
 import scala.collection.mutable
 
@@ -13,6 +13,8 @@ import scala.collection.mutable
 object Test {
 
   def main(args: Array[String]): Unit = {
-    println(1 << 10)
+    val s = "a b c "
+    println(s)
+    println(s.trim)
   }
 }
