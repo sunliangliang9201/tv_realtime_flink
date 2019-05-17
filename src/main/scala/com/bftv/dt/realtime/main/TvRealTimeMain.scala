@@ -84,6 +84,8 @@ object TvRealTimeMain {
       //注册自定聚合函数
       tableEnv.registerFunction("myAggreOne", new MyAggreOneFunction)
       tableEnv.registerFunction("myAggreTopNOne", new MyAggreTopNOneFunction)
+      //注册自定义scalar函数
+      tableEnv.registerFunction("changeCode", new MyChangeCodeFunction)
       //接下来从mysql获取需要执行的sql以及结果表
       val querys: Array[FlinkQuery] = MysqlDao.getQueryConfig(flinkKey)
       for (i <- querys) {

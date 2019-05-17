@@ -80,12 +80,13 @@ object TvRealTimeMain2 {
 
     tableEnv.registerFunction("myAggreOne", new MyAggreOneFunction)
     tableEnv.registerFunction("myAggreTopNOne", new MyAggreTopNOneFunction)
+    tableEnv.registerFunction("changeCode", new MyChangeCodeFunction)
 
 //    ds.keyBy(_.page_title).window(TumblingEventTimeWindows.of(org.apache.flink.streaming.api.windowing.time.Time.minutes(5))).aggregate(new CountAgg(), new WindowResultFunction()).keyBy(_._1).process(new MyTopNFunction(10)).addSink(new MysqlSink01)
 
 //    tableEnv.sqlQuery("select HOP_END(rowtime, INTERVAL '1' minute, INTERVAL '1' day) as end_window, myAggreTopNOne(page_title, uuid) as counts from tv_heart group by HOP(rowtime, INTERVAL '1' minute, INTERVAL '1' day)").toAppendStream[(Timestamp, Long)](queryConfig).print()
 
-    tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, page_title, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute), page_title").toAppendStream[(Timestamp, String, Long)](queryConfig).print()
+    tableEnv.sqlQuery("select TUMBLE_END(rowtime, INTERVAL '1' minute) as end_window, province, changeCode(province), city, count(uuid) as counts from tv_heart group by TUMBLE(rowtime, INTERVAL '1' minute), province, city").toAppendStream[(Timestamp, String, String, String, Long)](queryConfig).print()
 
     env.execute(flinkKeyConf.appName)
   }
